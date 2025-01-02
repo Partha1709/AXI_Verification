@@ -21,7 +21,7 @@ class aximaster extends uvm_agent;
     //  Function: connect_phase
     extern function void connect_phase(uvm_phase phase);
     
-endclass //axi_master extends uvm_agent
+endclass //aximaster extends uvm_agent
 
 function void axi_master::build_phase(uvm_phase phase);
     env_cfg = new("env_cfg");
