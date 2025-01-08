@@ -1,0 +1,55 @@
+class axi_slave extends uvm_agent;
+    `uvm_component_utils(axi_slave)
+
+    // Components
+    uvm_sequencer#(axi_transaction#(D_WIDTH, A_WIDTH)) seqr;
+    axi_s_driver drv;
+    axi_s_monitor mon;
+    uvm_analysis_port#(axi_transaction#(D_WIDTH, A_WIDTH)) ap;
+
+    // Configuration variable
+    env_config env_cfg;
+
+    // Constructor
+    function new(string name, uvm_component parent);
+        super.new(name, parent);
+    endfunction: new
+
+    // Phases
+    extern function void build_phase(uvm_phase phase);
+    extern function void connect_phase(uvm_phase phase);
+endclass: axi_slave
+
+// Build Phase Implementation
+function void axi_slave::build_phase(uvm_phase phase);
+    // Retrieve the environment configuration
+    env_cfg = new("env_cfg");
+    if (!uvm_config_db#(env_config)::get(this, "", "config", env_cfg)) begin
+        `uvm_fatal(get_name(), "Failed to retrieve env_config from ConfigDB!")
+    end else begin
+        `uvm_info(get_name(), "env_config retrieved successfully.", UVM_LOW)
+    end
+
+    // Create components
+    drv = axi_s_driver::type_id::create("drv", this);
+    mon = axi_s_monitor::type_id::create("mon", this);
+    seqr = uvm_sequencer#(axi_transaction#(D_WIDTH, A_WIDTH))::type_id::create("seqr", this);
+
+    // Assign the interface from env_config
+    drv.vif = env_cfg.intf;
+    mon.vif = env_cfg.intf;
+
+    // Create the analysis port
+    ap = new("ap", this);
+endfunction: build_phase
+
+// Connect Phase Implementation
+function void axi_slave::connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+
+    // Connect sequencer to driver
+    drv.seq_item_port.connect(seqr.seq_item_export);
+
+    // Connect monitor to analysis port
+    mon.ap.connect(ap);
+endfunction: connect_phase
